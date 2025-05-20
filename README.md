@@ -64,8 +64,3 @@ After running the playbook, you can test HTTPS access using:
 
 ```bash
 curl -k https://<your-server-ip>
-```
-
-## 📜 License
-
-This project is licensed under the MIT License.
