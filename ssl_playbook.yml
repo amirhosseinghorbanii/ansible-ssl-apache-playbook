@@ -1,0 +1,56 @@
+- name: SSL Playbook
+  hosts: AmirHossein
+
+  tasks:
+    ###Enabling SSL module and restarting apache2###
+  - name: Enable SSL  module
+    apache2_module:
+      name: ssl
+      state: present
+    notify: restart apache
+
+    ### Make SSL Certificates Directory in sites availabe Directory ###
+  - name: Make Directory
+    file:
+      path: /etc/apache2/sites-available/ssl_2023_2024
+      recurse: yes
+      state: directory
+
+    ### Copy Certificate and key file to /etc/apache2/sites-available/ssl_2023_2024 ##   
+  - name: Copy Certificate and key
+    copy:
+     src: "{{ item.src }}"
+     dest: /etc/apache2/sites-available/ssl_2023_2024/
+    with_items:
+      - { src: /root/projects/ssl/certificate/server.crt }
+      - { src: /root/projects/ssl/certificate/server.key }
+
+
+    ### Replace New SSL Cerficate file Address ###
+  - name: Replace SSL Cerficate File Address
+    replace:
+      path: /tmp/000-default.conf
+      regexp: "^SSLCertificateFile.*"
+      replace: |
+       SSLCertificateFile  /etc/apache2/sites-available/ssl_2023_2024/server.crt
+
+    ### Replace New SSL Cerficate key File Address ###
+  - name: Replace SSL Cerficate Key File Address
+    replace:
+      path: /tmp/000-default.conf
+      regexp: "^SSLCertificateKeyFile.*"
+      replace: |
+        SSLCertificateKeyFile  /etc/apache2/sites-available/ssl_2023_2024/server.key
+
+
+  handlers:
+    - name: restart apache
+      systemd:
+        name: apache2.service
+        enabled: yes
+        state: restarted
+
+    - name: Check HTTPS service
+      uri:
+        url: https://{{ ansible_default_ipv4.address }}
+        status_code: 200
